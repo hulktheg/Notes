@@ -47,13 +47,20 @@
       margin-bottom: 20px;
       flex-wrap: wrap;
     }
-    #noteInput {
+    #noteInput, #searchInput {
       flex: 1;
       padding: 8px;
       border: 1px solid #ddd;
       border-radius: 4px;
       font-size: 16px;
       min-width: 200px;
+    }
+    #sortSelect {
+      padding: 8px;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      font-size: 14px;
+      max-width: 150px;
     }
     button {
       padding: 8px 16px;
@@ -121,6 +128,7 @@
   <h1>Notion 2.0 - Work</h1>
   <div id="app">
     <div class="nav-bar">
+      <a href="index.html">Home</a>
       <a href="general.html">General</a>
       <a href="work.html" class="active">Work</a>
       <a href="personal.html">Personal</a>
@@ -130,6 +138,13 @@
       <input type="text" id="noteInput" placeholder="Type your note here">
       <button onclick="addNote('Work')">Add Note</button>
       <button onclick="saveNotes()">Save Notes</button>
+    </div>
+    <div class="input-container">
+      <input type="text" id="searchInput" placeholder="Search notes..." oninput="loadNotes('Work')">
+      <select id="sortSelect" onchange="loadNotes('Work')">
+        <option value="newest">Newest First</option>
+        <option value="oldest">Oldest First</option>
+      </select>
     </div>
     <div id="notes"></div>
   </div>

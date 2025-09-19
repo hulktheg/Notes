@@ -1,7 +1,7 @@
 function getRelativeTime(timestamp) {
     const now = new Date();
     const noteDate = new Date(parseInt(timestamp));
-    const diffMs = now - noteDate; // Difference in milliseconds
+    const diffMs = now - noteDate;
     const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
     const timeString = noteDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false });
   
@@ -26,21 +26,34 @@ function getRelativeTime(timestamp) {
   function loadNotes(category) {
     const data = JSON.parse(localStorage.getItem('notes') || '{}');
     const notesDiv = document.getElementById('notes');
+    const searchInput = document.getElementById('searchInput').value.toLowerCase();
+    const sortOrder = document.getElementById('sortSelect').value;
+  
+    // Filter notes by category and search term
+    let notes = Object.entries(data).filter(([id, note]) => 
+      note.category === category && note.text.toLowerCase().includes(searchInput)
+    );
+  
+    // Sort notes by timestamp
+    notes.sort((a, b) => {
+      const timeA = parseInt(a[0]);
+      const timeB = parseInt(b[0]);
+      return sortOrder === 'newest' ? timeB - timeA : timeA - timeB;
+    });
+  
     notesDiv.innerHTML = '';
-    for (const [id, note] of Object.entries(data)) {
-      if (note.category === category) {
-        const noteDiv = document.createElement('div');
-        noteDiv.className = 'note';
-        noteDiv.innerHTML = `
-          <div class="note-content">
-            <p class="note-text">${note.text}</p>
-            <p class="note-meta">${getRelativeTime(id)}</p>
-          </div>
-          <button class="edit-btn" onclick="editNote('${id}')">Edit</button>
-          <button class="delete-btn" onclick="deleteNote('${id}')">Delete</button>
-        `;
-        notesDiv.appendChild(noteDiv);
-      }
+    for (const [id, note] of notes) {
+      const noteDiv = document.createElement('div');
+      noteDiv.className = 'note';
+      noteDiv.innerHTML = `
+        <div class="note-content">
+          <p class="note-text">${note.text}</p>
+          <p class="note-meta">${getRelativeTime(id)}</p>
+        </div>
+        <button class="edit-btn" onclick="editNote('${id}')">Edit</button>
+        <button class="delete-btn" onclick="deleteNote('${id}')">Delete</button>
+      `;
+      notesDiv.appendChild(noteDiv);
     }
   }
   
@@ -97,4 +110,4 @@ function getRelativeTime(timestamp) {
   
   // Load notes for the current page's category when the page loads
   const category = document.querySelector('h1').textContent.split(' - ')[1];
-  loadNotes(category);
+  if (category) loadNotes(category);
