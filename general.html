@@ -9,19 +9,20 @@
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
       margin: 0;
       padding: 20px;
-      background-color: #f5f5f5;
+      background-color: #1e1e1e;
+      color: #e0e0e0;
     }
     #app {
       max-width: 600px;
       margin: 0 auto;
-      background: white;
+      background: #2a2a2a;
       padding: 20px;
       border-radius: 8px;
-      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+      box-shadow: 0 2px 8px rgba(0,0,0,0.3);
     }
     h1 {
       font-size: 24px;
-      color: #333;
+      color: #ffffff;
     }
     .nav-bar {
       display: flex;
@@ -31,15 +32,23 @@
     .nav-bar a {
       padding: 8px 16px;
       text-decoration: none;
-      color: #007bff;
+      color: #ffffff;
+      background-color: #1e88e5;
       border-radius: 4px;
     }
     .nav-bar a:hover {
-      background-color: #e9ecef;
+      background-color: #1565c0;
     }
     .nav-bar a.active {
-      background-color: #007bff;
-      color: white;
+      background-color: #0d47a1;
+      color: #ffffff;
+    }
+    .nav-bar a.home-link {
+      background-color: #d81b60;
+      font-weight: bold;
+    }
+    .nav-bar a.home-link:hover {
+      background-color: #b0003a;
     }
     .input-container {
       display: flex;
@@ -47,46 +56,69 @@
       margin-bottom: 20px;
       flex-wrap: wrap;
     }
-    #noteInput, #searchInput {
+    #noteInput, #searchInput, #tagInput {
       flex: 1;
       padding: 8px;
-      border: 1px solid #ddd;
+      border: 1px solid #444;
       border-radius: 4px;
       font-size: 16px;
       min-width: 200px;
+      background-color: #333;
+      color: #e0e0e0;
     }
     #sortSelect {
       padding: 8px;
-      border: 1px solid #ddd;
+      border: 1px solid #444;
       border-radius: 4px;
       font-size: 14px;
       max-width: 150px;
+      background-color: #333;
+      color: #e0e0e0;
     }
     button {
       padding: 8px 16px;
       border: none;
       border-radius: 4px;
-      background-color: #007bff;
-      color: white;
+      background-color: #1e88e5;
+      color: #ffffff;
       cursor: pointer;
       font-size: 14px;
     }
     button:hover {
-      background-color: #0056b3;
+      background-color: #1565c0;
     }
     .delete-btn {
-      background-color: #dc3545;
+      background-color: #d81b60;
       margin-left: 10px;
     }
     .delete-btn:hover {
-      background-color: #b02a37;
+      background-color: #b0003a;
     }
-    .edit-btn {
-      background-color: #28a745;
+    .edit-btn, .pin-btn {
+      background-color: #2e7d32;
       margin-left: 10px;
     }
-    .edit-btn:hover {
-      background-color: #218838;
+    .edit-btn:hover, .pin-btn:hover {
+      background-color: #1b5e20;
+    }
+    .pin-btn.pinned {
+      background-color: #fbc02d;
+      color: #000;
+    }
+    .pin-btn.pinned:hover {
+      background-color: #f9a825;
+    }
+    .clear-btn {
+      background-color: #6d4c41;
+    }
+    .clear-btn:hover {
+      background-color: #4e342e;
+    }
+    .export-btn {
+      background-color: #ab47bc;
+    }
+    .export-btn:hover {
+      background-color: #8e24aa;
     }
     #notes {
       margin-top: 20px;
@@ -95,10 +127,14 @@
       display: flex;
       align-items: center;
       padding: 10px;
-      background: #f8f9fa;
+      background: #333;
       border-radius: 4px;
       margin-bottom: 10px;
-      border: 1px solid #eee;
+      border: 1px solid #444;
+    }
+    .note.pinned {
+      border: 2px solid #fbc02d;
+      background: #424242;
     }
     .note-content {
       flex: 1;
@@ -111,16 +147,28 @@
     }
     .note-meta {
       font-size: 12px;
-      color: #666;
+      color: #b0b0b0;
       margin-top: 4px;
     }
-    .note-input {
+    .note-tags {
+      font-size: 12px;
+      color: #80deea;
+      margin-top: 4px;
+    }
+    .note-input, .tag-input {
       flex: 1;
       padding: 8px;
-      border: 1px solid #ddd;
+      border: 1px solid #444;
       border-radius: 4px;
       font-size: 16px;
       margin-right: 10px;
+      background-color: #333;
+      color: #e0e0e0;
+    }
+    .note-count {
+      font-size: 14px;
+      color: #b0b0b0;
+      margin-bottom: 10px;
     }
   </style>
 </head>
@@ -128,7 +176,7 @@
   <h1>Notion 2.0 - General</h1>
   <div id="app">
     <div class="nav-bar">
-      <a href="index.html">Home</a>
+      <a href="index.html" class="home-link">Home</a>
       <a href="general.html" class="active">General</a>
       <a href="work.html">Work</a>
       <a href="personal.html">Personal</a>
@@ -136,6 +184,7 @@
     </div>
     <div class="input-container">
       <input type="text" id="noteInput" placeholder="Type your note here">
+      <input type="text" id="tagInput" placeholder="Add tags (comma-separated)">
       <button onclick="addNote('General')">Add Note</button>
       <button onclick="saveNotes()">Save Notes</button>
     </div>
@@ -145,7 +194,10 @@
         <option value="newest">Newest First</option>
         <option value="oldest">Oldest First</option>
       </select>
+      <button class="clear-btn" onclick="clearNotes('General')">Clear All</button>
+      <button class="export-btn" onclick="exportNotes('General')">Export</button>
     </div>
+    <div class="note-count" id="noteCount">0 notes</div>
     <div id="notes"></div>
   </div>
   <script src="script.js"></script>

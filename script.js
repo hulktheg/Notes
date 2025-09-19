@@ -28,29 +28,40 @@ function getRelativeTime(timestamp) {
     const notesDiv = document.getElementById('notes');
     const searchInput = document.getElementById('searchInput').value.toLowerCase();
     const sortOrder = document.getElementById('sortSelect').value;
+    const noteCountDiv = document.getElementById('noteCount');
   
     // Filter notes by category and search term
     let notes = Object.entries(data).filter(([id, note]) => 
-      note.category === category && note.text.toLowerCase().includes(searchInput)
+      note.category === category && 
+      (note.text.toLowerCase().includes(searchInput) || 
+       (note.tags && note.tags.some(tag => tag.toLowerCase().includes(searchInput))))
     );
   
-    // Sort notes by timestamp
+    // Sort notes: pinned first, then by timestamp
     notes.sort((a, b) => {
+      const pinnedA = a[1].pinned ? 1 : 0;
+      const pinnedB = b[1].pinned ? 1 : 0;
+      if (pinnedA !== pinnedB) return pinnedB - pinnedA;
       const timeA = parseInt(a[0]);
       const timeB = parseInt(b[0]);
       return sortOrder === 'newest' ? timeB - timeA : timeA - timeB;
     });
   
+    // Update note count
+    noteCountDiv.textContent = `${notes.length} note${notes.length !== 1 ? 's' : ''}`;
+  
     notesDiv.innerHTML = '';
     for (const [id, note] of notes) {
       const noteDiv = document.createElement('div');
-      noteDiv.className = 'note';
+      noteDiv.className = `note ${note.pinned ? 'pinned' : ''}`;
       noteDiv.innerHTML = `
         <div class="note-content">
           <p class="note-text">${note.text}</p>
           <p class="note-meta">${getRelativeTime(id)}</p>
+          ${note.tags && note.tags.length ? `<p class="note-tags">Tags: ${note.tags.join(', ')}</p>` : ''}
         </div>
         <button class="edit-btn" onclick="editNote('${id}')">Edit</button>
+        <button class="pin-btn ${note.pinned ? 'pinned' : ''}" onclick="togglePin('${id}')">${note.pinned ? 'Unpin' : 'Pin'}</button>
         <button class="delete-btn" onclick="deleteNote('${id}')">Delete</button>
       `;
       notesDiv.appendChild(noteDiv);
@@ -58,15 +69,18 @@ function getRelativeTime(timestamp) {
   }
   
   function addNote(category) {
-    const input = document.getElementById('noteInput');
-    const noteText = input.value.trim();
+    const noteInput = document.getElementById('noteInput');
+    const tagInput = document.getElementById('tagInput');
+    const noteText = noteInput.value.trim();
+    const tags = tagInput.value.trim().split(',').map(tag => tag.trim()).filter(tag => tag);
     if (noteText) {
       const data = JSON.parse(localStorage.getItem('notes') || '{}');
       const id = Date.now();
-      data[id] = { text: noteText, category: category };
+      data[id] = { text: noteText, category: category, tags: tags, pinned: false };
       localStorage.setItem('notes', JSON.stringify(data));
-      input.value = ''; // Clear input
-      loadNotes(category); // Refresh note list
+      noteInput.value = '';
+      tagInput.value = '';
+      loadNotes(category);
     }
   }
   
@@ -77,6 +91,7 @@ function getRelativeTime(timestamp) {
     noteDiv.innerHTML = `
       <div class="note-content">
         <input type="text" class="note-input" value="${note.text}">
+        <input type="text" class="tag-input" value="${note.tags ? note.tags.join(', ') : ''}" placeholder="Add tags (comma-separated)">
       </div>
       <button class="edit-btn" onclick="saveEditedNote('${id}', '${note.category}')">Save</button>
       <button class="delete-btn" onclick="loadNotes('${note.category}')">Cancel</button>
@@ -85,22 +100,69 @@ function getRelativeTime(timestamp) {
   
   function saveEditedNote(id, category) {
     const noteDiv = document.querySelector(`.note:has(button[onclick="saveEditedNote('${id}', '${category}')"])`);
-    const input = noteDiv.querySelector('.note-input');
-    const newText = input.value.trim();
+    const noteInput = noteDiv.querySelector('.note-input');
+    const tagInput = noteDiv.querySelector('.tag-input');
+    const newText = noteInput.value.trim();
+    const tags = tagInput.value.trim().split(',').map(tag => tag.trim()).filter(tag => tag);
     if (newText) {
       const data = JSON.parse(localStorage.getItem('notes') || '{}');
-      data[id] = { text: newText, category: category };
+      data[id] = { ...data[id], text: newText, tags: tags };
       localStorage.setItem('notes', JSON.stringify(data));
-      loadNotes(category); // Refresh note list
+      loadNotes(category);
     }
+  }
+  
+  function togglePin(id) {
+    const data = JSON.parse(localStorage.getItem('notes') || '{}');
+    const category = data[id].category;
+    data[id].pinned = !data[id].pinned;
+    localStorage.setItem('notes', JSON.stringify(data));
+    loadNotes(category);
   }
   
   function deleteNote(id) {
     const data = JSON.parse(localStorage.getItem('notes') || '{}');
     const category = data[id].category;
-    delete data[id]; // Remove note by ID
+    delete data[id];
     localStorage.setItem('notes', JSON.stringify(data));
-    loadNotes(category); // Refresh note list
+    loadNotes(category);
+  }
+  
+  function clearNotes(category) {
+    if (confirm(`Are you sure you want to delete all notes in ${category}?`)) {
+      const data = JSON.parse(localStorage.getItem('notes') || '{}');
+      for (const id of Object.keys(data)) {
+        if (data[id].category === category) {
+          delete data[id];
+        }
+      }
+      localStorage.setItem('notes', JSON.stringify(data));
+      loadNotes(category);
+    }
+  }
+  
+  function exportNotes(category) {
+    const data = JSON.parse(localStorage.getItem('notes') || '{}');
+    const notes = Object.entries(data).filter(([id, note]) => note.category === category);
+    let exportText = `Notion 2.0 Notes - ${category}\n\n`;
+    for (const [id, note] of notes) {
+      exportText += `Note: ${note.text}\n`;
+      exportText += `Time: ${getRelativeTime(id)}\n`;
+      if (note.tags && note.tags.length) {
+        exportText += `Tags: ${note.tags.join(', ')}\n`;
+      }
+      if (note.pinned) {
+        exportText += `Pinned: Yes\n`;
+      }
+      exportText += `\n`;
+    }
+    const blob = new Blob([exportText], { type: 'text/plain' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `${category}_notes.txt`;
+    a.click();
+    URL.revokeObjectURL(url);
   }
   
   function saveNotes() {
@@ -109,5 +171,5 @@ function getRelativeTime(timestamp) {
   }
   
   // Load notes for the current page's category when the page loads
-  const category = document.querySelector('h1').textContent.split(' - ')[1];
+  const category = document.querySelector('h1')?.textContent.split(' - ')[1];
   if (category) loadNotes(category);
