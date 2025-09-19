@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Notion 2.0 Website</title>
+  <title>Notion 2.0 - Work</title>
   <style>
     body {
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
@@ -23,10 +23,29 @@
       font-size: 24px;
       color: #333;
     }
+    .nav-bar {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 20px;
+    }
+    .nav-bar a {
+      padding: 8px 16px;
+      text-decoration: none;
+      color: #007bff;
+      border-radius: 4px;
+    }
+    .nav-bar a:hover {
+      background-color: #e9ecef;
+    }
+    .nav-bar a.active {
+      background-color: #007bff;
+      color: white;
+    }
     .input-container {
       display: flex;
       gap: 10px;
       margin-bottom: 20px;
+      flex-wrap: wrap;
     }
     #noteInput {
       flex: 1;
@@ -34,6 +53,7 @@
       border: 1px solid #ddd;
       border-radius: 4px;
       font-size: 16px;
+      min-width: 200px;
     }
     button {
       padding: 8px 16px;
@@ -73,10 +93,19 @@
       margin-bottom: 10px;
       border: 1px solid #eee;
     }
-    .note-text {
+    .note-content {
       flex: 1;
       margin: 0;
       word-break: break-word;
+    }
+    .note-text {
+      margin: 0;
+      font-size: 16px;
+    }
+    .note-meta {
+      font-size: 12px;
+      color: #666;
+      margin-top: 4px;
     }
     .note-input {
       flex: 1;
@@ -84,15 +113,22 @@
       border: 1px solid #ddd;
       border-radius: 4px;
       font-size: 16px;
+      margin-right: 10px;
     }
   </style>
 </head>
 <body>
-  <h1>Notion 2.0 Website</h1>
+  <h1>Notion 2.0 - Work</h1>
   <div id="app">
+    <div class="nav-bar">
+      <a href="general.html">General</a>
+      <a href="work.html" class="active">Work</a>
+      <a href="personal.html">Personal</a>
+      <a href="ideas.html">Ideas</a>
+    </div>
     <div class="input-container">
       <input type="text" id="noteInput" placeholder="Type your note here">
-      <button onclick="addNote()">Add Note</button>
+      <button onclick="addNote('Work')">Add Note</button>
       <button onclick="saveNotes()">Save Notes</button>
     </div>
     <div id="notes"></div>
